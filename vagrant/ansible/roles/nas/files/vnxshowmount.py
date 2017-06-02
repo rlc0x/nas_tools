@@ -60,7 +60,7 @@ class VnxeSSH(object):
         re_nfs_export = re.compile(r'export\W+(?P<nfs_export>(/\w+?([\/|\w]+)))\W+?(name\W+(?P<nfs_name>(/\w+?([\/|\w]+))))\W+')
         list_nfs_command = 'export NAS_DB=/nas; /nas/bin/server_export ALL -Protocol nfs -list -all'
 
-        nfs_exports = defaultdict(list)
+        nfs_exports = defaultdict(lambda:defaultdict(list))
         try:
             ssh = self.connect_vnx_ssh()
             stdin,stdout,stderr = ssh.exec_command(list_nfs_command, get_pty=True)
@@ -71,12 +71,11 @@ class VnxeSSH(object):
                         nfs_export = re_nfs_export_match.group('nfs_export')
                         nfs_name = re_nfs_export_match.group('nfs_name')
 
-                        nfs_exports[nfs_export].append(nfs_name)
+                        nfs_exports[self.host][nfs_export].append(nfs_name)
 
             ssh.close()
-            nfs_exports_data = json.loads(json.dumps(nfs_exports))
 
-            return nfs_exports_data
+            return nfs_exports
 
         except Exception as e:
             print('Exception when calling `list_nfs_exports`: {}\n'.format(e))
@@ -85,10 +84,8 @@ class VnxeSSH(object):
     def list_cifs_shares(self):
         re_cifs_share = re.compile(r'share\W+(?P<share_name>\w+)\W+(?P<share_directory>(/\w+?([\/|\w]+)))\W+(?P<remainder>.*)')
         re_comment = re.compile(r'.*comment\W+(\W+.*)\W+')
-
         list_cifs_command = 'export NAS_DB=/nas; /nas/bin/server_export ALL -Protocol cifs -list -all'
-
-        cifs_shares = defaultdict(list)
+        data = defaultdict(lambda: defaultdict(list))
 
         try:
             ssh = self.connect_vnx_ssh()
@@ -104,14 +101,10 @@ class VnxeSSH(object):
                             comment = re_comment_match.group(1)
                         else:
                             comment = "No Comment"
-
-
-                        cifs_shares[share_name].append(share_directory)
+                        data[self.host][share_name].append(share_directory)
 
             ssh.close()
-            cifs_shares_data = json.loads(json.dumps(cifs_shares))
-
-            return cifs_shares_data
+            return data
 
         except Exception as e:
             print('Exception when calling `list_cifs_shares`: {}\n'.format(e))
@@ -124,7 +117,7 @@ class VnxeSSH(object):
         re_nas = re.compile(r'^\W+(\w+)\[\w+\]\W+on\W+if=(\w+)$')
         re_path = re.compile(r'^\W+Absolute path of the share=(.*)$')
 
-        cifs_connections = defaultdict(list)
+        cifs_connections = defaultdict(lambda: defaultdict(list))
 
         list_cifs_connections_command = 'export NAS_DB=/nas; /nas/bin/server_cifs ALL -option audit'
 
@@ -159,12 +152,11 @@ class VnxeSSH(object):
                             if pline != '':
                                 pline = pline.replace('\\', '/')
                                 pline = '{}:{}'.format(nasname,pline.replace('\\', '/'))
-                                cifs_connections[pline].append(cline_uline)
+                                cifs_connections[self.host][pline].append(cline_uline)
                             in_stanza = False
 
             ssh.close()
-            data = json.loads(json.dumps(cifs_connections))
-            return data
+            return cifs_connections
         except Exception as e:
             print('Exception when calling `list_cifs_shares`: {}\n'.format(e))
             raise
@@ -199,6 +191,11 @@ def getargs():
                         action='store_true',
                         dest='list_exports',
                         help='List NFS exports on the VNX')
+    parser.add_argument('--print_all',
+                        action='store_true',
+                        dest='print_all',
+                        required=False,
+                        help='Generate output files of all views')
     args = parser.parse_args()
     return args
 
@@ -210,14 +207,25 @@ if __name__ == '__main__':
 
     if args.list_shares:
         cifs_shares = P.list_cifs_shares()
-        pprint(cifs_shares)
+        print(json.dumps(cifs_shares, indent=4))
     if args.list_exports:
         nfs_exports = P.list_nfs_exports()
-        pprint(nfs_exports)
+        exports_fname = '{}.json'.format(args.nas)
+        print(json.dumps(nfs_exports, indent=4))
     if args.list_connections:
         cifs_connections = P.list_cifs_share_connections()
-        pprint(cifs_connections, depth=4)
-        fname = '{}.json'.format(args.nas)
-        with open(fname, "w") as outfile:
-            json.dump(cifs_connections,outfile, indent=4)
+        print(json.dumps(cifs_connections, indent=4))
+    if args.print_all:
+        cifs_shares = P.list_cifs_shares()
+        nfs_exports = P.list_nfs_exports()
+        cifs_connections = P.list_cifs_share_connections()
+
+        with open('{}_cifs_shares.json'.format(args.nas), 'w') as cifs:
+            json.dump(cifs_shares,cifs, indent=4)
+
+        with open('{}_exports.json'.format(args.nas), 'w') as exports:
+            json.dump(nfs_exports,exports, indent=4)
+        
+        with open('{}_cifs_connections.json'.format(args.nas), 'w') as shares:
+            json.dump(cifs_connections,shares, indent=4)
 
