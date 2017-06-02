@@ -1,4 +1,5 @@
 ---
-- hosts: ansible
+- hosts: all
+  sudo: true
   roles:
     - nas

@@ -74,8 +74,9 @@ class VnxeSSH(object):
                         nfs_exports[nfs_export].append(nfs_name)
 
             ssh.close()
+            nfs_exports_data = json.loads(json.dumps(nfs_exports))
 
-            return nfs_exports
+            return nfs_exports_data
 
         except Exception as e:
             print('Exception when calling `list_nfs_exports`: {}\n'.format(e))
@@ -108,8 +109,9 @@ class VnxeSSH(object):
                         cifs_shares[share_name].append(share_directory)
 
             ssh.close()
+            cifs_shares_data = json.loads(json.dumps(cifs_shares))
 
-            return cifs_shares
+            return cifs_shares_data
 
         except Exception as e:
             print('Exception when calling `list_cifs_shares`: {}\n'.format(e))
