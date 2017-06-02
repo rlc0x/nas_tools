@@ -117,7 +117,7 @@ class VnxeSSH(object):
         re_nas = re.compile(r'^\W+(\w+)\[\w+\]\W+on\W+if=(\w+)$')
         re_path = re.compile(r'^\W+Absolute path of the share=(.*)$')
 
-        cifs_connections = defaultdict(lambda: defaultdict(list))
+        cifs_connections = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
 
         list_cifs_connections_command = 'export NAS_DB=/nas; /nas/bin/server_cifs ALL -option audit'
 
@@ -151,8 +151,7 @@ class VnxeSSH(object):
                             pline = re_path_match.group(1)
                             if pline != '':
                                 pline = pline.replace('\\', '/')
-                                pline = '{}:{}'.format(nasname,pline.replace('\\', '/'))
-                                cifs_connections[self.host][pline].append(cline_uline)
+                                cifs_connections[self.host][nasname][pline].append(cline_uline)
                             in_stanza = False
 
             ssh.close()
