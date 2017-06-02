@@ -3,10 +3,10 @@
 - name: Install required packages
   yum: pkg={{item}} state=present
   with_items:
-    - git
-    - openssl-devel
     - epel-release
     - gcc
+    - git
+    - openssl-devel
     - sqlite
     - sqlite-devel
     - tar
