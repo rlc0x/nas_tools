@@ -8,9 +8,14 @@ from pprint import pprint
 import json
 
 class ShowMount(object):
-    def __init__(self, nas=None):
-        if nas is not None:
-            self.nas = nas
+    def __init__(self, session):
+        self.log = logging.getLogger(__name__)
+        self.log.addHandler(logging.NullHandler())
+        self.session = session
+
+    def __init__(self, ip=None):
+        if ip is not None:
+            self.nas = ip
         else:
             raise ValueError('Name of the nas is required')
 
