@@ -30,8 +30,9 @@ Vagrant.configure("2") do |config|
     ansible.limit = "all"
   end
 
-  Dir.mkdir(ansible_inventory_dir) unless Dir.exists?(ansible_inventory_dir)
-  File.open("#{ansible_inventory_dir}/vagrant", 'w') do |f|
+  # setup the ansible inventory file
+  Dir.mkdir(ansible_inventory_dir) unless Dir.exist?(ansible_inventory_dir)
+  File.open("#{ansible_inventory_dir}/vagrant" ,'w') do |f|
     f.write "[#{settings['vm_name']}]\n"
     f.write "#{settings['ip_address']}\n"
   end
