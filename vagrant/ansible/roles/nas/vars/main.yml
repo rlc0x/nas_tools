@@ -1,0 +1,5 @@
+---
+# vars file for nas
+python_src_version: 'Python-3.5.2'
+python_src_url: 'https://www.python.org/ftp/python/3.5.2/Python-3.5.2.tar.xz'
+python_src_dir: '/usr/local/src'

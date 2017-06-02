@@ -1,0 +1,29 @@
+---
+# tasks file for nas
+- name: Install required packages
+  yum: pkg={{item}} state=present
+  with_items:
+    - git
+    - openssl-devel
+    - epel-release
+    - gcc
+    - sqlite
+    - sqlite-devel
+    - tar
+    - vim
+    - wget
+    - xz
+
+- name: Create install directory
+  file: path={{python_src_dir}} state=directory
+
+
+- name: Install Python 3.5.2
+  unarchive: src={{python_src_url}} dest={{python_src_dir}} remote_src=True list_files=True
+
+- name: Configure and build Python
+  shell: cd {{python_src_dir}}/Python-3.5.2 && {{ item }}
+  with_items:
+    - "./configure"
+    - "make altinstall"
+
